@@ -271,33 +271,33 @@ def build_url_with_search_params(request) -> str:
     path: str = request.path
     search_parameters: list[str] = []
 
-    search_op: Optional[str] = request.GET.get("op")
-    if search_op:
-        search_parameters.append(f"op={search_op}")
-    search_keyword: Optional[str] = request.GET.get("keyword")
-    if search_keyword:
-        search_parameters.append(f"keyword={search_keyword}")
-    search_office: Optional[str] = request.GET.get("office")
-    if search_office:
-        search_parameters.append(f"office={search_office}")
-    search_genre: Optional[str] = request.GET.get("genre")
-    if search_genre:
-        search_parameters.append(f"genre={search_genre}")
-    search_cantus_id: Optional[str] = request.GET.get("cantus_id")
-    if search_cantus_id:
-        search_parameters.append(f"cantus_id={search_cantus_id}")
-    search_mode: Optional[str] = request.GET.get("mode")
-    if search_mode:
-        search_parameters.append(f"mode={search_mode}")
-    search_feast: Optional[str] = request.GET.get("feast")
-    if search_feast:
-        search_parameters.append(f"feast={search_feast}")
-    search_position: Optional[str] = request.GET.get("position")
-    if search_position:
-        search_parameters.append(f"position={search_position}")
-    search_melodies: Optional[str] = request.GET.get("melodies")
-    if search_melodies:
-        search_parameters.append(f"melodies={search_melodies}")
+    operation: Optional[str] = request.GET.get("op")
+    if operation:
+        search_parameters.append(f"op={operation}")
+    keyword: Optional[str] = request.GET.get("keyword")
+    if keyword:
+        search_parameters.append(f"keyword={keyword}")
+    office: Optional[str] = request.GET.get("office")
+    if office:
+        search_parameters.append(f"office={office}")
+    genre: Optional[str] = request.GET.get("genre")
+    if genre:
+        search_parameters.append(f"genre={genre}")
+    cantus_id: Optional[str] = request.GET.get("cantus_id")
+    if cantus_id:
+        search_parameters.append(f"cantus_id={cantus_id}")
+    mode: Optional[str] = request.GET.get("mode")
+    if mode:
+        search_parameters.append(f"mode={mode}")
+    feast: Optional[str] = request.GET.get("feast")
+    if feast:
+        search_parameters.append(f"feast={feast}")
+    position: Optional[str] = request.GET.get("position")
+    if position:
+        search_parameters.append(f"position={position}")
+    melodies: Optional[str] = request.GET.get("melodies")
+    if melodies:
+        search_parameters.append(f"melodies={melodies}")
     # we only ever expect to find a `search_bar` param on ChantSearchView,
     # and never on ChantSearchMSView, but it shouldn't cause problems
     # if it's present in the links on ChantSearchMSView
