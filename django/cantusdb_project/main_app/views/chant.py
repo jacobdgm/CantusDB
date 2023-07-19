@@ -252,6 +252,68 @@ def get_feast_selector_options(source, folios):
     return folios_with_feasts
 
 
+def build_url_with_search_params(request) -> str:
+    """Return a URL matching the current view, with query parameters matching
+    all current search terms appended to the end of the URL.
+
+    Used by ChantSearchView and ChantSearchMSView to create links in the
+    column headers at the top of the table of search results. This function
+    ensures that all search parameters are preserved when viewing a different
+    flavour of the page via these links.
+
+    Args:
+        request: a request to ChantSearchView or to ChantSearchMSView
+
+    Returns:
+        str: A URL with a path and optional query parameters. If
+        no query parameters, URL ends with with a "?"
+    """
+    path: str = request.path
+    search_parameters: list[str] = []
+
+    search_op: Optional[str] = request.GET.get("op")
+    if search_op:
+        search_parameters.append(f"op={search_op}")
+    search_keyword: Optional[str] = request.GET.get("keyword")
+    if search_keyword:
+        search_parameters.append(f"keyword={search_keyword}")
+    search_office: Optional[str] = request.GET.get("office")
+    if search_office:
+        search_parameters.append(f"office={search_office}")
+    search_genre: Optional[str] = request.GET.get("genre")
+    if search_genre:
+        search_parameters.append(f"genre={search_genre}")
+    search_cantus_id: Optional[str] = request.GET.get("cantus_id")
+    if search_cantus_id:
+        search_parameters.append(f"cantus_id={search_cantus_id}")
+    search_mode: Optional[str] = request.GET.get("mode")
+    if search_mode:
+        search_parameters.append(f"mode={search_mode}")
+    search_feast: Optional[str] = request.GET.get("feast")
+    if search_feast:
+        search_parameters.append(f"feast={search_feast}")
+    search_position: Optional[str] = request.GET.get("position")
+    if search_position:
+        search_parameters.append(f"position={search_position}")
+    search_melodies: Optional[str] = request.GET.get("melodies")
+    if search_melodies:
+        search_parameters.append(f"melodies={search_melodies}")
+    # we only ever expect to find a `search_bar` param on ChantSearchView,
+    # and never on ChantSearchMSView, but it shouldn't cause problems
+    # if it's present in the links on ChantSearchMSView
+    search_bar: Optional[str] = request.GET.get("search_bar")
+    if search_bar:
+        search_parameters.append(f"search_bar={search_bar}")
+
+    if search_parameters:
+        joined_search_parameters = "&".join(search_parameters)
+        url_with_search_params = path + "?" + joined_search_parameters
+    else:
+        url_with_search_params = path + "?"
+
+    return url_with_search_params
+
+
 class ChantDetailView(DetailView):
     """
     Displays a single Chant object. Accessed with ``chants/<int:pk>``
@@ -706,49 +768,15 @@ class ChantSearchView(ListView):
         context["order"] = self.request.GET.get("order")
         context["sort"] = self.request.GET.get("sort")
 
+        keyword: Optional[str] = self.request.GET.get("keyword")
+        if keyword:
+            # for rendering "Search {keyword} on CantusIndex.org" link
+            context["keyword"] = keyword
+
         # build a url containing all the search parameters, excluding ordering parameters.
         # this way, when someone clicks on a column heading, we can append the ordering parameters
         # while retaining the search parameters
-        current_url: str = self.request.path
-        search_parameters: list[str] = []
-
-        search_op: Optional[str] = self.request.GET.get("op")
-        if search_op:
-            search_parameters.append(f"op={search_op}")
-        search_keyword: Optional[str] = self.request.GET.get("keyword")
-        if search_keyword:
-            search_parameters.append(f"keyword={search_keyword}")
-            context["keyword"] = search_keyword
-        search_office: Optional[str] = self.request.GET.get("office")
-        if search_office:
-            search_parameters.append(f"office={search_office}")
-        search_genre: Optional[str] = self.request.GET.get("genre")
-        if search_genre:
-            search_parameters.append(f"genre={search_genre}")
-        search_cantus_id: Optional[str] = self.request.GET.get("cantus_id")
-        if search_cantus_id:
-            search_parameters.append(f"cantus_id={search_cantus_id}")
-        search_mode: Optional[str] = self.request.GET.get("mode")
-        if search_mode:
-            search_parameters.append(f"mode={search_mode}")
-        search_feast: Optional[str] = self.request.GET.get("feast")
-        if search_feast:
-            search_parameters.append(f"feast={search_feast}")
-        search_position: Optional[str] = self.request.GET.get("position")
-        if search_position:
-            search_parameters.append(f"position={search_position}")
-        search_melodies: Optional[str] = self.request.GET.get("melodies")
-        if search_melodies:
-            search_parameters.append(f"melodies={search_melodies}")
-        search_bar: Optional[str] = self.request.GET.get("search_bar")
-        if search_bar:
-            search_parameters.append(f"search_bar={search_bar}")
-
-        url_with_search_params: str = current_url + "?"
-        if search_parameters:
-            joined_search_parameters: str = "&".join(search_parameters)
-            url_with_search_params += joined_search_parameters
-
+        url_with_search_params = build_url_with_search_params(self.request)
         context["url_with_search_params"] = url_with_search_params
 
         return context
@@ -965,44 +993,12 @@ class ChantSearchMSView(ListView):
         if (source.published == False) and (not display_unpublished):
             raise PermissionDenied
 
-        current_url = self.request.path
-        search_parameters = []
-
-        search_op = self.request.GET.get("op")
-        if search_op:
-            search_parameters.append(f"op={search_op}")
-        search_keyword = self.request.GET.get("keyword")
-        if search_keyword:
-            search_parameters.append(f"keyword={search_keyword}")
-        search_office = self.request.GET.get("office")
-        if search_office:
-            search_parameters.append(f"office={search_office}")
-        search_genre = self.request.GET.get("genre")
-        if search_genre:
-            search_parameters.append(f"genre={search_genre}")
-        search_cantus_id = self.request.GET.get("cantus_id")
-        if search_cantus_id:
-            search_parameters.append(f"cantus_id={search_cantus_id}")
-        search_mode = self.request.GET.get("mode")
-        if search_mode:
-            search_parameters.append(f"mode={search_mode}")
-        search_feast = self.request.GET.get("feast")
-        if search_feast:
-            search_parameters.append(f"feast={search_feast}")
-        search_position = self.request.GET.get("position")
-        if search_position:
-            search_parameters.append(f"position={search_position}")
-        search_melodies = self.request.GET.get("melodies")
-        if search_melodies:
-            search_parameters.append(f"melodies={search_melodies}")
-
-        if search_parameters:
-            joined_search_parameters = "&".join(search_parameters)
-            url_with_search_params = current_url + "?" + joined_search_parameters
-        else:
-            url_with_search_params = current_url + "?"
-
+        # build a url containing all the search parameters, excluding ordering parameters.
+        # this way, when someone clicks on a column heading, we can append the ordering parameters
+        # while retaining the search parameters
+        url_with_search_params = build_url_with_search_params(self.request)
         context["url_with_search_params"] = url_with_search_params
+
         return context
 
     def get_queryset(self) -> QuerySet:
