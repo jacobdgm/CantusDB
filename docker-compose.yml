@@ -36,7 +36,6 @@ services:
     volumes:
       - certbot_data:/var/www/certbot/:rw
       - certificates:/etc/letsencrypt/:rw
-    restart: always
 
   postgres:
     build:
