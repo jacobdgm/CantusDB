@@ -1,6 +1,8 @@
+import json
 import unittest
+from unittest.mock import Mock, patch
 from django.test import TestCase
-from typing import Union
+from typing import Union, Optional
 from main_app.models import (
     Chant,
     Source,
@@ -11,6 +13,82 @@ from main_app.tests.make_fakes import (
 )
 from main_app.management.commands import update_cached_concordances
 from main_app.signals import generate_incipit
+from cantusindex import get_json_from_ci_api
+
+DATA_FOR_CID_001008: str = """
+    {
+        "info": {
+            "field_ah_item": null,
+            "field_ah_volume": null,
+            "field_cao": "1008",
+            "field_cao_concordances": "D",
+            "field_feast": "Exaltatio Crucis",
+            "field_full_text": "Adoremus deum quia ipse redemit nos",
+            "field_fulltext_source": "CAO (1968), Vol. 3, p. 2;",
+            "field_genre": "I",
+            "field_language": null,
+            "field_notes": null,
+            "field_related_chant_id": null,
+            "field_similar_chant_id": null,
+            "field_troped_chant_id": null
+        },
+        "chants": {
+            "1": {
+                "siglum": "F-Pn : Lat. 17296",
+                "srclink": "http://musmed.eu/source/13486",
+                "chantlink": "http://musmed.eu/chant/190422",
+                "folio": "213v",
+                "sequence": "1",
+                "incipit": "Adoremus deum quia ipse redemit nos",
+                "feast": "Exaltatio Crucis",
+                "office": "M",
+                "genre": "I",
+                "position": "",
+                "image": "https://gallica.bnf.fr/ark:/12148/btv1b6000532c/f438.item",
+                "mode": "4",
+                "fulltext": "Adoremus deum quia ipse redemit nos",
+                "melody": "",
+                "db": "MMMO"
+            },
+            "2": {
+                "siglum": "F-Pn Lat. 15182",
+                "srclink": "http://cantusdatabase.org/source/123632",
+                "chantlink": "http://cantusdatabase.org/chant/415291",
+                "folio": "355v",
+                "sequence": "3",
+                "incipit": "Adoremus dominum quia ipse",
+                "feast": "Exaltatio Crucis",
+                "office": "M",
+                "genre": "I",
+                "position": "",
+                "image": "http://gallica.bnf.fr/ark:/12148/btv1b8447769r/f712.image",
+                "mode": "6T",
+                "fulltext": "",
+                "melody": "",
+                "db": "CD"
+            },
+            "0": {
+                "siglum": "F-Pn Lat. 15182",
+                "srclink": "https://cantusdatabase.org/source/123632/",
+                "chantlink": "https://cantusdatabase.org/chant/415291/",
+                "folio": "355v",
+                "sequence": "3",
+                "incipit": "Adoremus dominum quia ipse",
+                "feast": "Exaltatio Crucis",
+                "office": "M",
+                "genre": "I",
+                "position": null,
+                "image": "http://gallica.bnf.fr/ark:/12148/btv1b8447769r/f712.image",
+                "mode": "6T",
+                "fulltext": null,
+                "melody": null,
+                "db": "CD"
+            }
+        }
+    }
+"""
+BYTES_FOR_CID_001008: bytes = bytes(DATA_FOR_CID_001008, encoding="utf-8-sig")
+
 
 # run with `python -Wa manage.py test main_app.tests.test_functions`
 # the -Wa flag tells Python to display deprecation warnings
@@ -122,9 +200,29 @@ class IncipitSignalTest(TestCase):
 
 
 class CantusIndexFunctionsTest(TestCase):
-    @unittest.skip()
-    def test_get_data_from_ci_api(self):
-        pass
+    def test_get_json_from_ci_api(self):
+        expected_json: dict = json.loads(DATA_FOR_CID_001008)
 
+        # When running the tests, we create a mock copy of requests.get
+        # that will replace (i.e., patch) the call to requests.get within
+        # get_json_from_ci_api. This way, instead of testing
+        # get_json_from_ci_api AND requests.get AND the state of the Cantus Index
+        # database, we can test get_json_from_ci_api alone, on a known value returned
+        # by requests.get.
+        class MockResponse:
+            def __init__(self, content: bytes):
+                self.content = content
+
+            def content(self):
+                return self.content
+
+        def mock_requests_get(url: str, timeout: Optional[int] = None):
+            return MockResponse(BYTES_FOR_CID_001008)
+
+        with patch("requests.get", mock_requests_get):
+            observed_json = get_json_from_ci_api("/json-cid/001008")
+            self.assertEqual(observed_json, expected_json)
+
+    @unittest.skip("not yet implemented")
     def test_get_expected_fulltext(self):
         pass
