@@ -13,7 +13,7 @@ from main_app.tests.make_fakes import (
 )
 from main_app.management.commands import update_cached_concordances
 from main_app.signals import generate_incipit
-from cantusindex import get_json_from_ci_api
+from cantusindex import get_json_from_ci_api, get_expected_fulltext
 
 DATA_FOR_CID_001008: str = """
     {
@@ -88,6 +88,7 @@ DATA_FOR_CID_001008: str = """
     }
 """
 BYTES_FOR_CID_001008: bytes = bytes(DATA_FOR_CID_001008, encoding="utf-8-sig")
+JSON_FOR_CID_001008: dict = json.loads(DATA_FOR_CID_001008)
 
 
 # run with `python -Wa manage.py test main_app.tests.test_functions`
@@ -201,7 +202,7 @@ class IncipitSignalTest(TestCase):
 
 class CantusIndexFunctionsTest(TestCase):
     def test_get_json_from_ci_api(self):
-        expected_json: dict = json.loads(DATA_FOR_CID_001008)
+        expected_json: dict = JSON_FOR_CID_001008
 
         # When running the tests, we create a mock copy of requests.get
         # that will replace (i.e., patch) the call to requests.get within
@@ -223,6 +224,20 @@ class CantusIndexFunctionsTest(TestCase):
             observed_json = get_json_from_ci_api("/json-cid/001008")
             self.assertEqual(observed_json, expected_json)
 
-    @unittest.skip("not yet implemented")
     def test_get_expected_fulltext(self):
-        pass
+        json_from_ci: dict = json.loads(DATA_FOR_CID_001008)
+        expected_fulltext: str = json_from_ci["info"]["field_full_text"]
+
+        # patch get_json_from_ci_api to return a known value, in order to test
+        # get_expected_fulltext only.
+        def mock_get_json_from_ci_api(path: str, timeout: Optional[int] = 2):
+            return JSON_FOR_CID_001008
+
+        with patch(
+            "cantusindex.get_json_from_ci_api",
+            mock_get_json_from_ci_api,
+        ):
+            observed_fulltext = get_expected_fulltext("001008")
+            print(f"{observed_fulltext=}")
+
+        self.assertEqual(observed_fulltext, expected_fulltext)
