@@ -1,3 +1,4 @@
+import unittest
 from django.test import TestCase
 from typing import Union
 from main_app.models import (
@@ -118,3 +119,12 @@ class IncipitSignalTest(TestCase):
         observed_incipit_2 = generate_incipit(short_fulltext)
         with self.subTest(test="fulltext that's already a short incipit"):
             self.assertEqual(observed_incipit_2, expected_incipit_2)
+
+
+class CantusIndexFunctionsTest(TestCase):
+    @unittest.skip()
+    def test_get_data_from_ci_api(self):
+        pass
+
+    def test_get_expected_fulltext(self):
+        pass
