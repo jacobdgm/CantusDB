@@ -44,3 +44,20 @@ def get_json_from_ci_api(path: str, timeout: Optional[int] = None) -> dict:
     json_content: dict = ujson.loads(decoded_content)
 
     return json_content
+
+
+def get_expected_fulltext(cantus_id: str) -> str:
+    """Given a Cantus ID, get the canonical fulltext for
+    that Cantus ID from a Cantus Index API and return it.
+
+    Args:
+        cantus_id (str): The Cantus ID.
+
+    Returns:
+        str: The canonical/expected fulltext for the Cantus ID.
+    """
+    path = f"/json-cid/{cantus_id}"
+    data = get_json_from_ci_api(path)
+    expected_fulltext = data["info"]["field_full_text"]
+
+    return expected_fulltext
